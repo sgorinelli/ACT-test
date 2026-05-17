@@ -1,0 +1,210 @@
+import React, { useState, useEffect } from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
+import { motion } from "framer-motion";
+
+// ===== MODERN ACT EXPERIENCE DESIGN =====
+
+
+const weeks = [
+  {
+    title: "Present Moment",
+    subtitle: "Learn to anchor attention",
+    color: "bg-blue-500",
+    theory: "Stay present instead of getting lost in thoughts.",
+    metaphorTitle: "Flashlight of Attention",
+    metaphorText: "Your attention is like a flashlight. You can always bring it back.",
+    exercises: [
+      { name: "Breathing", type: "timer", duration: 120 },
+      { name: "Grounding", type: "guidedInput", steps: ["5 things you see","4 feel","3 hear","2 smell","1 taste"] }
+    ]
+  },
+  {
+    title: "Acceptance",
+    subtitle: "Make space for emotions",
+    color: "bg-emerald-500",
+    theory: "Stop fighting inner experiences.",
+    metaphorTitle: "Tug of War",
+    metaphorText: "Drop the rope instead of fighting.",
+    exercises: [
+      { name: "Allow feeling", type: "text", instructions: "Say: I allow this" }
+    ]
+  },
+  {
+    title: "Defusion",
+    subtitle: "Step back from thoughts",
+    color: "bg-purple-500",
+    theory: "Thoughts are not facts.",
+    metaphorTitle: "Leaves on a Stream",
+    metaphorText: "Let thoughts pass like leaves.",
+    exercises: [
+      { name: "Label thought", type: "input", instructions: "Write a thought" }
+    ]
+  },
+  {
+    title: "Values",
+    subtitle: "Clarify what matters",
+    color: "bg-orange-500",
+    theory: "Values guide your direction.",
+    metaphorTitle: "Compass",
+    metaphorText: "Move toward what matters.",
+    exercises: [
+      { name: "Values map", type: "guidedInput", steps: ["Relationships","Health","Work","Growth"] }
+    ]
+  },
+  {
+    title: "Action",
+    subtitle: "Take committed steps",
+    color: "bg-pink-500",
+    theory: "Action creates meaning.",
+    metaphorTitle: "Mountain Path",
+    metaphorText: "Focus on the next step.",
+    exercises: [
+      { name: "Tiny action", type: "input", instructions: "Your next step" }
+    ]
+  }
+];
+
+export default function ACTPlatform() {
+  const [currentWeek, setCurrentWeek] = useState(0);
+  const [completed, setCompleted] = useState([]);
+  const [activeExercise, setActiveExercise] = useState(null);
+  const [inputs, setInputs] = useState({});
+  const [timer, setTimer] = useState(0);
+  const [running, setRunning] = useState(false);
+
+  useEffect(() => {
+    const saved = JSON.parse(localStorage.getItem("actData"));
+    if (saved) {
+      setCompleted(saved.completed || []);
+      setInputs(saved.inputs || {});
+    }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem("actData", JSON.stringify({ completed, inputs }));
+  }, [completed, inputs]);
+
+
+  useEffect(() => {
+    let interval;
+    if (running && timer > 0) {
+      interval = setInterval(() => setTimer((t) => t - 1), 1000);
+    }
+    return () => clearInterval(interval);
+  }, [running, timer]);
+
+  const toggleExercise = (idx) => {
+    const key = `${currentWeek}-${idx}`;
+    if (!completed.includes(key)) setCompleted([...completed, key]);
+  };
+
+  const progress = Math.round((completed.length / weeks.reduce((s, w) => s + w.exercises.length, 0)) * 100);
+  return (
+    <div className="min-h-screen bg-gray-50 flex">
+      {/* Sidebar */}
+      <div className="w-64 bg-white shadow-md p-4 space-y-3">
+        <h2 className="font-bold text-lg">ACT Journey</h2>
+        {weeks.map((w, i) => (
+          <div
+            key={i}
+            onClick={() => setCurrentWeek(i)}
+            className={`p-3 rounded-xl cursor-pointer transition ${
+              i === currentWeek ? "bg-black text-white" : "hover:bg-gray-100"
+            }`}
+          >
+            <div className="font-medium">{w.title}</div>
+            <div className="text-xs opacity-70">{w.subtitle}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Main */}
+      <div className="flex-1 p-8 space-y-6">
+
+
+        {/* Header */}
+        <div className="space-y-2">
+          <h1 className="text-3xl font-bold">ACT Wellbeing</h1>
+          <Progress value={progress} />
+          <p className="text-sm text-gray-500">Progress: {progress}%</p>
+        </div>
+
+
+        {/* Hero */}
+        <motion.div className={`p-6 rounded-2xl text-white ${weeks[currentWeek].color}`}>
+          <h2 className="text-xl font-semibold">{weeks[currentWeek].title}</h2>
+          <p className="opacity-80">{weeks[currentWeek].subtitle}</p>
+        </motion.div>
+        {/* Content grid */}
+        <div className="grid md:grid-cols-2 gap-6">
+          <Card>
+            <CardContent className="p-5 space-y-3">
+              <h3 className="font-semibold">Theory</h3>
+              <p className="text-sm text-gray-600">{weeks[currentWeek].theory}</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-5 space-y-3">
+              <h3 className="font-semibold">Metaphor</h3>
+              <p className="font-medium">{weeks[currentWeek].metaphorTitle}</p>
+              <p className="text-sm text-gray-600">{weeks[currentWeek].metaphorText}</p>
+            </CardContent>
+          </Card>
+        </div>
+        {/* Exercises */}
+        <Card>
+          <CardContent className="p-6 space-y-4">
+            <h3 className="font-semibold">Exercises</h3>
+
+
+            {weeks[currentWeek].exercises.map((ex, idx) => (
+              <motion.div
+                whileHover={{ scale: 1.02 }}
+                key={idx}
+                onClick={() => setActiveExercise({ ...ex, idx })}
+                className="p-4 border rounded-xl cursor-pointer flex justify-between"
+              >
+                <span>{ex.name}</span>
+                <span>▶</span>
+              </motion.div>
+            ))}
+
+            {activeExercise && (
+              <motion.div className="p-6 bg-gray-100 rounded-xl space-y-3">
+                <h4 className="font-semibold">{activeExercise.name}</h4>
+                {activeExercise.type === "timer" && (
+                  <>
+                    <h2 className="text-2xl">{timer}s</h2>
+                    <Button onClick={() => { setTimer(activeExercise.duration); setRunning(true); }}>
+                      Start
+                    </Button>
+                  </>
+                )}
+
+
+                {activeExercise.type === "guidedInput" && activeExercise.steps.map((s, i) => (
+                  <input key={i} placeholder={s} className="w-full p-2 border rounded" onChange={(e)=>setInputs({...inputs,[s]:e.target.value})}/>
+                ))}
+
+
+                {activeExercise.type === "input" && (
+                  <input placeholder={activeExercise.instructions} className="w-full p-2 border rounded" onChange={(e)=>setInputs({...inputs,response:e.target.value})}/>
+                )}
+
+
+                {activeExercise.type === "text" && <p>{activeExercise.instructions}</p>}
+
+
+                <Button onClick={() => { toggleExercise(activeExercise.idx); setActiveExercise(null); }}>
+                  Done
+                </Button>
+              </motion.div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}
