@@ -1200,6 +1200,13 @@
                         <p>Before we begin, we need to look honestly at what you've already tried. Most of us try to control our internal world (our thoughts and feelings) the same way we control the outside world. If there's a rock in your shoe, you take it out. So, naturally, if there's sadness in your mind, you try to pull it out.</p>
                         <p>But ask yourself: <strong>Has running away from, suppressing, or fighting your difficult emotions permanently worked?</strong> If you are completely honest, fighting your mind probably hasn't brought you lasting peace. Realising that your old strategies are "hopeless" isn't depressing—it's liberating. It means you can finally drop the heavy armour you've been carrying and try something radically new.</p>
                     </div>
+
+                    <div class="image-placeholder">
+                        <img src="assets/creative-hopelessness.jpg" alt="[Image Placeholder: Creative Hopelessness]" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                        <div style="display:none; padding:3rem; background:var(--surface-2); text-align:center; border-radius:var(--r); border:1.5px dashed var(--border);">
+                            <em style="color:var(--text-muted);">[Image Placeholder: Creative Hopelessness. Dev: Add 'assets/creative-hopelessness.jpg']</em>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="step-page" data-page="2">
@@ -1803,7 +1810,7 @@
                             </div>
                             <div>
                                 <label style="font-weight:600; display:block; margin-bottom:.5rem; color:var(--text-dark);">If it had a temperature?</label>
-                                <select id="p-temp" onchange="checkCustom('p-temp')">
+                                <select id="p-text" onchange="checkCustom('p-temp')">
                                     <option>Burning hot</option>
                                     <option>Ice cold</option>
                                     <option>Lukewarm</option>
@@ -1866,6 +1873,20 @@
                     </div>
 
                     <p style="text-align:center; margin-top:3.5rem; font-style:italic; font-size:1.15rem; color:var(--text-muted);">Thank you for dedicating this time to your wellbeing. Values are a compass, not a destination. Whenever you get lost, just check your compass, drop the rope, and take one step forward.</p>
+
+                    <div style="background:var(--surface-2); border:1px solid var(--border-light); padding:2rem; border-radius:var(--r); margin-top:3.5rem; margin-bottom:2.5rem;">
+                        <h4 style="font-family:'Cormorant Garamond', serif; font-size:1.5rem; font-weight:500; color:var(--primary); text-transform:none; letter-spacing:0; margin-bottom:1.5rem; border-bottom:1px solid var(--border); padding-bottom:1rem;">Program Feedback</h4>
+                        
+                        <label style="font-weight:600; display:block; margin-bottom:.5rem; color:var(--text-dark);">How would you rate your experience with The Flex Mind? (1 = Poor, 10 = Excellent)</label>
+                        <div style="display:flex; align-items:center; gap:1rem; margin-bottom:1.5rem;">
+                            <span style="font-weight:600; color:var(--text-muted);">1</span>
+                            <input type="range" id="feedback-rating" min="1" max="10" value="10" style="flex:1;" oninput="document.getElementById('feedback-rating-val').innerText = this.value">
+                            <span style="font-weight:600; color:var(--primary); width:20px; text-align:right;" id="feedback-rating-val">10</span>
+                        </div>
+
+                        <label style="font-weight:600; display:block; margin-bottom:.5rem; color:var(--text-dark);">Any final thoughts, suggestions, or feedback to help us improve?</label>
+                        <textarea id="feedback-text" rows="3" placeholder="I found the section on..."></textarea>
+                    </div>
 
                     <button style="background:transparent; color:var(--text-faint); border:1px solid var(--border); padding:1.1rem; border-radius:var(--r-sm); width:100%; margin-top:4rem; cursor:pointer; font-weight:600; font-family:'Jost',sans-serif; font-size:.85rem; letter-spacing:.08em; text-transform:uppercase; transition:all .2s;" onmouseover="this.style.borderColor='var(--error)';this.style.color='var(--error)';" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-faint)';" onclick="resetProgress()">Erase All Data &amp; Restart Program</button>
                 </div>
@@ -2196,7 +2217,15 @@
         function loadFormData() {
             const data = JSON.parse(localStorage.getItem('act_form_data_v5') || '{}');
             document.querySelectorAll('textarea, input[type="text"], select, input[type="range"]')
-                .forEach(el => { if (el.id && data[el.id] !== undefined) el.value = data[el.id]; });
+                .forEach(el => { 
+                    if (el.id && data[el.id] !== undefined) {
+                        el.value = data[el.id]; 
+                        if(el.id === 'feedback-rating') {
+                            const disp = document.getElementById('feedback-rating-val');
+                            if(disp) disp.innerText = el.value;
+                        }
+                    } 
+                });
             document.querySelectorAll('input[type="checkbox"]')
                 .forEach(el => { if (el.id && el.id !== 'struggle-switch' && el.id !== 'intro-commit' && data[el.id] !== undefined) el.checked = data[el.id]; });
             if (data['willingness-dial-hidden'] !== undefined) setDialValue(parseInt(data['willingness-dial-hidden']) || 0);
