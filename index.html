@@ -1156,7 +1156,7 @@
                 padding: 1.25rem;
             }
             .content-area  { padding: 3rem 2.5rem; }
-            .cp-fork        { flex-direction: column; }
+            .cp-fork       { flex-direction: column; }
             .chess-editor   { grid-template-columns: 1fr; }
             .double-standard-grid { grid-template-columns: 1fr; }
             .app-header h1  { font-size: 3.4rem; }
@@ -1870,23 +1870,11 @@
                         <h3 style="color:white; margin-top:0; text-align:center; font-size:2.2rem;">The Final Reflection</h3>
                         <p style="text-align:center; color:rgba(255,255,255,.85); margin-bottom:2rem;">As you conclude this program, reflect on your journey. What is the most vital insight you are taking with you?</p>
                         <textarea id="w5-final" rows="8" placeholder="Take your time. Write a letter of commitment and compassion to yourself as you move forward…" style="background:rgba(255,255,255,.97); color:var(--text-body); border:none; border-radius:var(--r); padding:1.5rem;"></textarea>
+                        
+                        <button class="btn-primary" onclick="sendReflection()" style="background:var(--accent); margin-top:1.5rem; color:white;">Send My Letter</button>
                     </div>
 
                     <p style="text-align:center; margin-top:3.5rem; font-style:italic; font-size:1.15rem; color:var(--text-muted);">Thank you for dedicating this time to your wellbeing. Values are a compass, not a destination. Whenever you get lost, just check your compass, drop the rope, and take one step forward.</p>
-
-                    <div style="background:var(--surface-2); border:1px solid var(--border-light); padding:2rem; border-radius:var(--r); margin-top:3.5rem; margin-bottom:2.5rem;">
-                        <h4 style="font-family:'Cormorant Garamond', serif; font-size:1.5rem; font-weight:500; color:var(--primary); text-transform:none; letter-spacing:0; margin-bottom:1.5rem; border-bottom:1px solid var(--border); padding-bottom:1rem;">Program Feedback</h4>
-                        
-                        <label style="font-weight:600; display:block; margin-bottom:.5rem; color:var(--text-dark);">How would you rate your experience with The Flex Mind? (1 = Poor, 10 = Excellent)</label>
-                        <div style="display:flex; align-items:center; gap:1rem; margin-bottom:1.5rem;">
-                            <span style="font-weight:600; color:var(--text-muted);">1</span>
-                            <input type="range" id="feedback-rating" min="1" max="10" value="10" style="flex:1;" oninput="document.getElementById('feedback-rating-val').innerText = this.value">
-                            <span style="font-weight:600; color:var(--primary); width:20px; text-align:right;" id="feedback-rating-val">10</span>
-                        </div>
-
-                        <label style="font-weight:600; display:block; margin-bottom:.5rem; color:var(--text-dark);">Any final thoughts, suggestions, or feedback to help us improve?</label>
-                        <textarea id="feedback-text" rows="3" placeholder="I found the section on..."></textarea>
-                    </div>
 
                     <button style="background:transparent; color:var(--text-faint); border:1px solid var(--border); padding:1.1rem; border-radius:var(--r-sm); width:100%; margin-top:4rem; cursor:pointer; font-weight:600; font-family:'Jost',sans-serif; font-size:.85rem; letter-spacing:.08em; text-transform:uppercase; transition:all .2s;" onmouseover="this.style.borderColor='var(--error)';this.style.color='var(--error)';" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-faint)';" onclick="resetProgress()">Erase All Data &amp; Restart Program</button>
                 </div>
@@ -1894,7 +1882,7 @@
                 <div class="pagination-bar">
                     <button class="btn-page" onclick="changePage(5, -1)" id="prev-btn-5" disabled>Previous</button>
                     <div class="page-dots" id="dots-5"></div>
-                    <button class="btn-page" onclick="changePage(5, 1)" id="next-btn-5">Next</button>
+                    <button class="btn-page" onclick="changePage(5, 1)" id="next-btn-5" style="display:none;">Next</button>
                 </div>
             </section>
 
@@ -1905,9 +1893,9 @@
 
     <script>
         const modules = [
-            { id: 0, title: "Introduction",       icon: "M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" },
-            { id: 1, title: "Week 1: Values",     icon: "M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" },
-            { id: 2, title: "Week 2: Action",     icon: "M13 10V3L4 14h7v7l9-11h-7z" },
+            { id: 0, title: "Introduction",     icon: "M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" },
+            { id: 1, title: "Week 1: Values",    icon: "M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" },
+            { id: 2, title: "Week 2: Action",    icon: "M13 10V3L4 14h7v7l9-11h-7z" },
             { id: 3, title: "Week 3: Present",    icon: "M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" },
             { id: 4, title: "Week 4: Untangling", icon: "M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" },
             { id: 5, title: "Week 5: Acceptance", icon: "M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" }
@@ -2071,6 +2059,16 @@
             }
         }
 
+        // Simulating the send reflection
+        function sendReflection() {
+            const text = document.getElementById('w5-final').value;
+            if (text.trim() === "") {
+                alert("Please write your reflection before sending.");
+                return;
+            }
+            showCustomToast("Letter Sent Successfully!");
+        }
+
         function renderValuesGrid() {
             const grid = document.getElementById('values-grid');
             const saved = JSON.parse(localStorage.getItem('act_selected_values_v5') || '[]');
@@ -2220,10 +2218,6 @@
                 .forEach(el => { 
                     if (el.id && data[el.id] !== undefined) {
                         el.value = data[el.id]; 
-                        if(el.id === 'feedback-rating') {
-                            const disp = document.getElementById('feedback-rating-val');
-                            if(disp) disp.innerText = el.value;
-                        }
                     } 
                 });
             document.querySelectorAll('input[type="checkbox"]')
