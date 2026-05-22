@@ -2506,7 +2506,9 @@
     <div class="save-indicator" id="save-toast">Progress Saved</div>
 
     <script>
-        // Language Toggle System
+        // =============================================
+        // GLOBAL STATE & DATA
+        // =============================================
         let currentLang = localStorage.getItem('act_lang') || 'en';
 
         const modules = [
@@ -2539,6 +2541,22 @@
         const pageCounts = {0: 2, 1: 5, 2: 5, 3: 5, 4: 4, 5: 5};
         let currentPages = {0: 1, 1: 1, 2: 1, 3: 1, 4: 1, 5: 1};
 
+        // =============================================
+        // INITIALIZATION
+        // =============================================
+        function init() {
+            setLang(currentLang);
+            loadFormData();
+            attachAutoSaveListeners();
+            setupDial();
+            initPaginationDots();
+            showModule(unlockedLevel === 0 ? 0 : unlockedLevel);
+            ['p-shape','p-temp','p-text'].forEach(id => checkCustom(id));
+        }
+
+        // =============================================
+        // LANGUAGE SYSTEM
+        // =============================================
         function setLang(lang) {
             currentLang = lang;
             document.documentElement.lang = lang;
@@ -2568,13 +2586,12 @@
                 el.textContent = el.getAttribute('data-' + lang);
             });
 
-            // Updates
+            // UI Updates
             renderSidebar();
             renderValuesGrid();
             toggleStruggle();
-            setDialValue(parseInt(document.getElementById('willingness-dial-hidden').value) || 0);
+            setDialValue(parseInt(localStorage.getItem('act_dial_v5')) || 0);
             
-            // Recompile Goal Sentence if fields exist
             if(document.getElementById('goal-output').innerText !== 'Fill out the fields above and click compile to generate your contract.' && document.getElementById('goal-output').innerText !== 'Täytä yllä olevat kentät ja klikkaa Kokoa luodaksesi sopimuksesi.') {
                  generateGoalSentence();
             } else {
@@ -2590,17 +2607,9 @@
             document.getElementById('btn-fi').style.color = lang === 'fi' ? 'var(--primary)' : 'var(--text-faint)';
         }
 
-        function init() {
-            setLang(currentLang); // Ensure UI sets correctly on load
-            loadFormData();
-            attachAutoSaveListeners();
-            setupDial();
-            initPaginationDots();
-            showModule(unlockedLevel === 0 ? 0 : unlockedLevel);
-            ['p-shape','p-temp','p-text'].forEach(id => checkCustom(id));
-        }
-
-        // ---------- PAGINATION LOGIC ----------
+        // =============================================
+        // PAGINATION & NAVIGATION LOGIC
+        // =============================================
         function initPaginationDots() {
             Object.keys(pageCounts).forEach(modId => {
                 const dotsContainer = document.getElementById('dots-' + modId);
@@ -2660,4 +2669,299 @@
                         dot.classList.remove('active');
                     }
                 });
-            }I'm having a hard time fulfilling your request. Can I help you with something else instead?
+            }
+        }
+
+        // =============================================
+        // SIDEBAR & MODULE PROGRESS
+        // =============================================
+        function renderSidebar() {
+            const sidebar = document.getElementById('nav-sidebar');
+            if(!sidebar) return;
+            sidebar.innerHTML = `<span class="sidebar-label"><span class="lang-en">Modules</span><span class="lang-fi">Moduulit</span></span>`;
+            modules.forEach(m => {
+                const btn = document.createElement('button');
+                btn.className = `nav-btn ${currentLevel === m.id ? 'active' : ''}`;
+                btn.disabled = m.id > unlockedLevel;
+                btn.onclick = () => showModule(m.id);
+                btn.innerHTML = `<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${m.icon}"></path></svg><span class="lang-en">${m.titleEn}</span><span class="lang-fi">${m.titleFi}</span>`;
+                sidebar.appendChild(btn);
+            });
+            document.documentElement.lang = currentLang; // Re-apply to fix visibility
+        }
+
+        function showModule(id) {
+            document.querySelectorAll('.module').forEach(m => m.classList.remove('active'));
+            document.getElementById('mod-' + id).classList.add('active');
+            currentLevel = id;
+            renderSidebar();
+            currentPages[id] = 1; 
+            updatePageView(id);
+        }
+
+        function completeModule(id) {
+            if (id === 0) {
+                const checkbox = document.getElementById('intro-commit');
+                if (!checkbox.checked) {
+                    alert(currentLang === 'en' ? "Please agree to the commitment first by checking the box." : "Hyväksy sitoumus ensin rastittamalla ruutu.");
+                    return;
+                }
+            }
+            if(id >= unlockedLevel && id < modules.length - 1) {
+                unlockedLevel = id + 1;
+                localStorage.setItem('act_level_v5', unlockedLevel);
+            }
+            showToast();
+            if (id < modules.length - 1) {
+                showModule(id + 1);
+            }
+        }
+
+        // =============================================
+        // INTERACTIVE EXERCISES
+        // =============================================
+        
+        // Week 1: Values Grid
+        function renderValuesGrid() {
+            const grid = document.getElementById('values-grid');
+            if(!grid) return;
+            grid.innerHTML = '';
+            let savedValues = JSON.parse(localStorage.getItem('act_values_v5') || '[]');
+            valuesList.forEach(v => {
+                const card = document.createElement('div');
+                card.className = `value-card ${savedValues.includes(v.en) ? 'selected' : ''}`;
+                card.innerHTML = `<span class="lang-en">${v.en}</span><span class="lang-fi">${v.fi}</span>`;
+                card.onclick = () => toggleValue(v.en, card);
+                grid.appendChild(card);
+            });
+            document.getElementById('value-count').innerText = savedValues.length;
+        }
+
+        function toggleValue(valEn, cardEl) {
+            let savedValues = JSON.parse(localStorage.getItem('act_values_v5') || '[]');
+            if (savedValues.includes(valEn)) {
+                savedValues = savedValues.filter(v => v !== valEn);
+                cardEl.classList.remove('selected');
+            } else {
+                if (savedValues.length >= 5) {
+                    alert(currentLang === 'en' ? "You can only select up to 5 values." : "Voit valita enintään 5 arvoa.");
+                    return;
+                }
+                savedValues.push(valEn);
+                cardEl.classList.add('selected');
+            }
+            localStorage.setItem('act_values_v5', JSON.stringify(savedValues));
+            document.getElementById('value-count').innerText = savedValues.length;
+            populateWeek2Values();
+            showToast();
+        }
+
+        function populateWeek2Values() {
+            const container = document.getElementById('w2-reflected-values');
+            if (!container) return;
+            let savedValues = JSON.parse(localStorage.getItem('act_values_v5') || '[]');
+            if (savedValues.length === 0) {
+                container.innerHTML = currentLang === 'en' ? '[Complete Week 1 First]' : '[Suorita ensin viikko 1]';
+            } else {
+                // Determine language to display them in
+                let displayStr = savedValues.map(enVal => {
+                    if (currentLang === 'en') return enVal;
+                    let found = valuesList.find(v => v.en === enVal);
+                    return found ? found.fi : enVal;
+                }).join(', ');
+                container.innerHTML = displayStr;
+            }
+        }
+
+        // Week 2: Goal Generator
+        function generateGoalSentence() {
+            const val = document.getElementById('gb-val').value || "[Value]";
+            const act = document.getElementById('gb-act').value || "[Action]";
+            const day = document.getElementById('gb-day').value || "[Day]";
+            const time = document.getElementById('gb-time').value || "[Time]";
+            const feel = document.getElementById('gb-feel').value || "[Feeling]";
+            
+            const out = document.getElementById('goal-output');
+            if (currentLang === 'en') {
+                out.innerText = `To serve my value of ${val}, I will ${act} on ${day} at ${time}, and I am willing to bring the feeling of ${feel} along with me.`;
+            } else {
+                out.innerText = `Palvellakseni "${val}" -arvoani, aion ${act} päivänä ${day} klo ${time}, ja olen valmis tuomaan tunteen "${feel}" mukanani.`;
+            }
+        }
+
+        // Week 3: Body Scan Tabs
+        function openScan(event, id) {
+            document.querySelectorAll('.scan-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.scan-tab').forEach(el => el.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            event.currentTarget.classList.add('active');
+        }
+        
+        // Week 4: Chessboard
+        function updateChess(color) {
+            const inputEl = document.getElementById(`chess-${color}-input`);
+            if(!inputEl) return;
+            const input = inputEl.value;
+            const disp = document.getElementById(`chess-${color}-disp`);
+            const font = document.getElementById(`chess-${color}-font`).value;
+            const size = document.getElementById(`chess-${color}-size`).value;
+            const opac = document.getElementById(`chess-${color}-opac`).value;
+            
+            disp.innerText = input || (currentLang === 'en' ? (color==='white'?'I am capable':'I am going to fail') : (color==='white'?'Olen kykenevä':'Aion epäonnistua'));
+            disp.style.fontFamily = font;
+            disp.style.fontSize = size + 'px';
+            disp.style.opacity = opac / 100;
+        }
+
+        // Week 5: Struggle Switch
+        function toggleStruggle() {
+            const isChecked = document.getElementById('struggle-switch').checked;
+            const status = document.getElementById('switch-status');
+            const desc = document.getElementById('switch-desc');
+            
+            if (isChecked) {
+                status.innerText = currentLang === 'en' ? 'SWITCH IS ON: FIGHTING THE FEELING' : 'KYTKIN PÄÄLLÄ: TUNNETTA VASTAAN TAISTELEMINEN';
+                status.style.color = 'var(--error)';
+                desc.innerHTML = currentLang === 'en' 
+                    ? "Anxiety shows up (Clean Pain). You hate it. You tense up. You fight it. You worry about why you're anxious. The anxiety amplifies into panic and exhaustion (Dirty Pain). You are trapped." 
+                    : "Ahdistus ilmestyy (Puhdas kipu). Vihaat sitä. Jännityt. Taistelet sitä vastaan. Murehdit miksi olet ahdistunut. Ahdistus voimistuu paniikiksi ja uupumukseksi (Likainen kipu). Olet ansassa.";
+            } else {
+                status.innerText = currentLang === 'en' ? 'SWITCH IS OFF: DROPPING THE ROPE' : 'KYTKIN POIS PÄÄLTÄ: KÖYDEN PUDOTTAMINEN';
+                status.style.color = 'var(--success)';
+                desc.innerHTML = currentLang === 'en'
+                    ? "Anxiety shows up (Clean Pain). You don't like it, but you don't fight it. You breathe. You notice it. You focus on your values. The feeling rises and falls naturally without turning into panic."
+                    : "Ahdistus ilmestyy (Puhdas kipu). Et pidä siitä, mutta et taistele sitä vastaan. Hengität. Huomaat sen. Keskityt arvoihisi. Tunne nousee ja laskee luonnollisesti muuttumatta paniikiksi.";
+            }
+        }
+
+        // Week 5: Willingness Dial
+        function setupDial() {
+            const dialArea = document.getElementById('dial-interaction-area');
+            const knob = document.getElementById('willingness-knob');
+            if(!dialArea || !knob) return;
+            
+            let isDragging = false;
+            
+            function updateDial(e) {
+                if(!isDragging) return;
+                const rect = dialArea.getBoundingClientRect();
+                const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+                if(clientX === undefined) return;
+
+                let percent = (clientX - rect.left) / rect.width;
+                percent = Math.max(0, Math.min(1, percent));
+                let val = Math.round(percent * 10);
+                setDialValue(val);
+            }
+            
+            dialArea.addEventListener('mousedown', () => isDragging = true);
+            document.addEventListener('mousemove', updateDial);
+            document.addEventListener('mouseup', () => { if (isDragging) { isDragging = false; scheduleSave(); } });
+            
+            dialArea.addEventListener('touchstart', () => isDragging = true, {passive: true});
+            document.addEventListener('touchmove', updateDial, {passive: true});
+            document.addEventListener('touchend', () => { if (isDragging) { isDragging = false; scheduleSave(); } });
+        }
+        
+        function setDialValue(val) {
+            val = Math.max(0, Math.min(10, val));
+            document.getElementById('willingness-dial-hidden').value = val;
+            document.getElementById('dial-val-text').innerText = val;
+            
+            const rotation = -135 + (val * 27); // Maps 0-10 to -135deg to +135deg
+            document.getElementById('willingness-knob').style.transform = `rotate(${rotation}deg)`;
+            
+            const desc = document.getElementById('dial-desc');
+            if (val <= 2) desc.innerText = currentLang === 'en' ? "I am completely shut down to this feeling." : "Olen täysin sulkeutunut tältä tunteelta.";
+            else if (val <= 5) desc.innerText = currentLang === 'en' ? "I am reluctantly tolerating it." : "Siedän sitä vastahakoisesti.";
+            else if (val <= 8) desc.innerText = currentLang === 'en' ? "I am opening up and making space for it." : "Avaudun ja teen sille tilaa.";
+            else desc.innerText = currentLang === 'en' ? "I am fully willing to experience this to live my values." : "Olen täysin valmis kokemaan tämän elääkseni arvojeni mukaisesti.";
+            
+            localStorage.setItem('act_dial_v5', val);
+        }
+
+        function checkCustom(id) {
+            const select = document.getElementById(id);
+            const customInput = document.getElementById(id + '-custom');
+            if(!select || !customInput) return;
+            if(select.value === 'custom') customInput.style.display = 'block';
+            else customInput.style.display = 'none';
+        }
+
+        // =============================================
+        // SAVING, LOADING & UTILS
+        // =============================================
+        function loadFormData() {
+            document.querySelectorAll('textarea, input[type="text"]').forEach(el => {
+                if (el.id) {
+                    const saved = localStorage.getItem('act_input_' + el.id);
+                    if (saved) el.value = saved;
+                }
+            });
+            document.querySelectorAll('input[type="checkbox"]').forEach(el => {
+                if (el.id && el.id !== 'struggle-switch' && el.id !== 'intro-commit') {
+                    const saved = localStorage.getItem('act_check_' + el.id);
+                    if (saved === 'true') el.checked = true;
+                }
+            });
+            document.querySelectorAll('select').forEach(el => {
+                if (el.id) {
+                    const saved = localStorage.getItem('act_sel_' + el.id);
+                    if (saved) el.value = saved;
+                }
+            });
+        }
+
+        function attachAutoSaveListeners() {
+            document.querySelectorAll('textarea, input[type="text"]').forEach(el => {
+                el.addEventListener('input', () => {
+                    localStorage.setItem('act_input_' + el.id, el.value);
+                    scheduleSave();
+                });
+            });
+            document.querySelectorAll('input[type="checkbox"]').forEach(el => {
+                if (el.id !== 'struggle-switch' && el.id !== 'intro-commit') {
+                    el.addEventListener('change', () => {
+                        localStorage.setItem('act_check_' + el.id, el.checked);
+                        scheduleSave();
+                    });
+                }
+            });
+            document.querySelectorAll('select').forEach(el => {
+                el.addEventListener('change', () => {
+                    localStorage.setItem('act_sel_' + el.id, el.value);
+                    scheduleSave();
+                });
+            });
+        }
+
+        function scheduleSave() {
+            clearTimeout(saveTimeout);
+            saveTimeout = setTimeout(showToast, 1500);
+        }
+
+        function showToast() {
+            const toast = document.getElementById('save-toast');
+            toast.innerText = currentLang === 'en' ? 'Progress Saved' : 'Edistyminen tallennettu';
+            toast.style.opacity = '1';
+            toast.style.transform = 'translateY(0)';
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateY(12px)';
+            }, 3000);
+        }
+
+        function sendReflection() {
+            alert(currentLang === 'en' ? "Your letter has been saved to your journey. Thank you!" : "Kirjeesi on tallennettu matkaasi. Kiitos!");
+        }
+
+        function resetProgress() {
+            if(confirm(currentLang === 'en' ? "Are you sure you want to erase all data? This cannot be undone." : "Oletko varma, että haluat poistaa kaikki tiedot? Tätä ei voi peruuttaa.")) {
+                localStorage.clear();
+                location.reload();
+            }
+        }
+
+        // Initialize App once DOM is fully loaded
+        window.addEventListener('DOMContentLoaded', init);
+    </script>
